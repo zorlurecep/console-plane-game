@@ -1,0 +1,325 @@
+#include<iostream>
+#include<Windows.h>
+#include<time.h>
+
+using namespace std;
+
+enum YON
+{
+	YON_SOL = 1,
+	YON_SAG = 2,
+	YON_YUKARI = 3,
+	YON_ASAGI = 4,
+	YON_DURAGAN = 5,
+};
+struct KoordinatBilgi
+{
+	int x;
+	int y;
+	YON yon;
+};
+
+const int genislik = 80;
+const int yukseklik = 20;
+const int maxMermiSayisi = 500;
+int dusmanBoyut = 3;
+int maxDusmanMiktari = 3;
+int mermiSayac1 = 0;
+int dusmanSayac1 = 0;
+
+
+KoordinatBilgi mermi[maxMermiSayisi];
+KoordinatBilgi ucak[genislik];
+KoordinatBilgi dusman[genislik];
+
+void dusmanSıfıDoldur() 
+{
+	for (int i = 0; i < genislik; i++)
+	{
+		dusman[i].x = 0;
+		dusman[i].y = 0;
+	} 
+}
+
+char sahne[yukseklik][genislik];
+char tuslar[256];
+
+void klavyeOku(char tuslar[])
+{
+	for (int x = 0; x < 256; x++)
+	{
+		tuslar[x] = (char)(GetAsyncKeyState(x) >> 8);
+	}
+}
+
+void gotoxy(int x, int y)
+{
+	COORD coord;
+	coord.X = x;
+	coord.Y = y;
+
+	SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), coord);
+}
+void kursoruGizle()
+{
+	HANDLE out = GetStdHandle(STD_OUTPUT_HANDLE);
+
+	CONSOLE_CURSOR_INFO     cursorInfo;
+
+	GetConsoleCursorInfo(out, &cursorInfo);
+	cursorInfo.bVisible = false;
+	SetConsoleCursorInfo(out, &cursorInfo);
+}
+
+void sinirOlustur()
+{
+	for (int x = 0; x < yukseklik; x++)
+	{
+		sahne[x][0] = 219;
+		sahne[x][genislik - 1] = 219;
+	}
+	for (int y = 0; y < genislik; y++)
+	{
+		sahne[0][y] = 219;
+		sahne[yukseklik - 1][y] = 219;
+	}
+}
+void sahneCiz()
+{
+	for (int i = 0; i < yukseklik; i++)
+	{
+		for (int j = 0; j < genislik; j++)
+		{
+			cout << sahne[i][j];
+		}
+		cout << endl;
+	}
+}
+void sahneyiSil()
+{
+	for (int i = 0; i < yukseklik; i++)
+	{
+		for (int j = 0; j < genislik; j++)
+		{
+			sahne[i][j] = ' ';
+		}
+	}
+}
+
+void ucakOlustur()
+{
+	ucak[0].x = 8;
+	ucak[0].y = 2;
+
+	ucak[1].x = 9;
+	ucak[1].y = 3;
+	
+	ucak[2].x = 10;
+	ucak[2].y = 4;
+	
+	ucak[3].x = 11;
+	ucak[3].y = 3;
+
+	ucak[4].x = 12;
+	ucak[4].y = 2;
+	
+}
+void ucakCiz()
+{
+	for (int i = 0; i < 5; i++)
+	{
+		int x = ucak[i].x;
+		int y = ucak[i].y;
+		sahne[x][y] = 219;
+	}
+}
+void ucakHareketEttir()
+{
+	for (int i = 0; i < 5; i++)
+	{
+		switch (ucak[i].yon)
+		{
+		case YON_ASAGI:
+			if (ucak[4 - i].x == 18)
+			{
+				ucak[4].yon = YON_DURAGAN;
+				ucak[3].yon = YON_DURAGAN;
+				ucak[2].yon = YON_DURAGAN;
+				ucak[1].yon = YON_DURAGAN;
+				ucak[0].yon = YON_DURAGAN;
+				break;
+			}
+			else
+			{
+				ucak[i].x++;
+				ucak[i].yon = YON_DURAGAN;
+				break;
+			}
+		case YON_YUKARI:
+			if (ucak[i].x == 1)
+			{
+				ucak[0].yon = YON_DURAGAN;
+				ucak[1].yon = YON_DURAGAN;
+				ucak[2].yon = YON_DURAGAN;
+				ucak[3].yon = YON_DURAGAN;
+				ucak[4].yon = YON_DURAGAN;
+				break;
+			}
+			else
+			{
+				ucak[i].x--;
+				ucak[i].yon = YON_DURAGAN;
+				break;
+			}
+		}
+	}
+}
+
+void dusmanOlustur()
+{
+	int rastgele = rand() % 16 + 1;
+	dusman[dusmanSayac1].x = rastgele;
+	dusman[dusmanSayac1].y = genislik;
+ }
+void dusmanHareketEttir()
+{
+	for (int i = 0; i < genislik; i++)
+	{
+		if (dusman[i].y > 0)
+		{
+			dusman[i].y--;
+		}
+	}
+	
+}
+void dusmanCiz()
+{
+	//for (int i = 0; i < genislik; i++)
+	{
+		int x = dusman[dusmanSayac1].x;
+		int y = dusman[dusmanSayac1].y;
+		
+		for (int a = 0; a < dusmanBoyut; a++)
+		{
+			for (int b = 0; b < dusmanBoyut; b++)
+			{
+				
+				if (a == 0 || b == 0 || a == dusmanBoyut - 1 || b == dusmanBoyut - 1)
+				{
+					sahne[x + a][y + b] = 178;
+				}
+				
+			}
+		}
+	}
+}
+
+void mermiHaraket()
+{
+	for (int i = 0; i < maxMermiSayisi; i++)
+	{
+		if (mermi[i].y != genislik)
+		{
+			//if (mermi[i].x != 0 && mermi[i].y != 0)
+			{
+				mermi[i].y++;
+			}
+		}
+	}
+}
+void mermiOlustur()
+{
+	mermi[mermiSayac1].x = ucak[2].x;
+	mermi[mermiSayac1].y = ucak[2].y + 1;
+}
+void mermiCiz()
+{
+	for (int i = 0; i < maxMermiSayisi; )
+	{
+		if (mermi[i].x + 1 != 0 && mermi[i].y + 1 != 0)
+		{
+			i++;
+		}
+		int x = mermi[i].x;
+		int y = mermi[i].y;
+		sahne[x][y] = 219;
+		x = 0;
+		y = 0;
+	}
+}
+
+void klavyeKontrol()
+{
+	
+	klavyeOku(tuslar);
+	for (int i = 0; i < 5; i++)
+	{
+		if (tuslar['W'] != 0)
+		{
+			ucak[i].yon = YON_YUKARI;
+		}
+		if (tuslar['S'] != 0)
+		{
+			ucak[i].yon = YON_ASAGI;
+		}
+	}
+	if (tuslar['A'] != 0)
+	{
+		mermiOlustur();
+		mermiSayac1++;
+	}
+}
+
+void carpisma()
+{
+	for (int i = 0; i < 500; i++)
+	{
+		for (int j = 0; j < genislik; j++)
+		{
+			if ((mermi[i].y + 1 == dusman[j].y) && (mermi[i].x == dusman[j].x || mermi[i].x == dusman[j].x +1 || mermi[i].x == dusman[j].x + 2) )
+			{
+				dusman[j].x = NULL;
+				dusman[j].y = NULL;
+				mermi[i].x = NULL;
+				mermi[i].y = NULL;
+				dusmanSayac1++;
+			}
+		}
+	}
+}
+
+
+
+int main()
+{
+	kursoruGizle();
+	ucakOlustur();
+	
+	while (true)
+	{
+		sahneyiSil();
+		sinirOlustur();
+		klavyeKontrol();
+		
+		ucakCiz();
+		ucakHareketEttir();
+	
+		mermiCiz();
+		mermiHaraket();
+		
+		if (dusman[dusmanSayac1].y == 0)
+		{
+			dusmanSayac1++;
+			dusmanOlustur();
+		}
+
+		dusmanCiz();
+		dusmanHareketEttir();
+		carpisma();
+		
+		gotoxy(0, 0);
+		sahneCiz();
+		
+		Sleep(10);
+	}
+}
